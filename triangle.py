@@ -8,9 +8,9 @@
 #     print()
 
 # 2.
-num = 7
-for i in range(num):
-    print('*' * i)
+# num = 7
+# for i in range(num):
+#     print('*' * i)
 
 # 3.
 # num = 7
