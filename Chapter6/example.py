@@ -77,25 +77,25 @@
 # -------------------------------------------------
     
 # โจทย์ข้อที่ 8: การจัดการเมนู
-choice = 0
-while choice != 4 :
-    print("\n--- เมนูหลัก ---")
-    print("1. ดูสถานะ")
-    print("2. ตั้งค่า")
-    print("3. ช่วยเหลือ")
-    print("4. ออกจากโปรแกรม")
+# choice = 0
+# while choice != 4 :
+#     print("\n--- เมนูหลัก ---")
+#     print("1. ดูสถานะ")
+#     print("2. ตั้งค่า")
+#     print("3. ช่วยเหลือ")
+#     print("4. ออกจากโปรแกรม")
 
-    choice = int(input("รับอินพุตจากผู้ใช้ (1 - 4) >> "))
-    if choice == 1 :
-        print(">> คุณเลือก: ดูสถานะ")
-    elif choice == 2 :
-         print(">> คุณเลือก: ตั้งค่า")
-    elif choice == 3 :
-         print(">> คุณเลือก: ช่วยเหลือ")
-    elif choice == 4 :
-        print("✅ ขอบคุณที่ใช้โปรแกรม กำลังออกจากระบบ...")
-    else :
-        print("⚠️ ตัวเลือกไม่ถูกต้อง โปรดเลือกตัวเลขระหว่าง 1 ถึง 4")
+    # choice = int(input("รับอินพุตจากผู้ใช้ (1 - 4) >> "))
+    # if choice == 1 :
+    #     print(">> คุณเลือก: ดูสถานะ")
+    # elif choice == 2 :
+    #      print(">> คุณเลือก: ตั้งค่า")
+    # elif choice == 3 :
+    #      print(">> คุณเลือก: ช่วยเหลือ")
+    # elif choice == 4 :
+    #     print("✅ ขอบคุณที่ใช้โปรแกรม กำลังออกจากระบบ...")
+    # else :
+    #     print("⚠️ ตัวเลือกไม่ถูกต้อง โปรดเลือกตัวเลขระหว่าง 1 ถึง 4")
 
 # -------------------------------------------------
 
@@ -147,10 +147,28 @@ while choice != 4 :
 #   print(f'{index} : {value}')
 # -------------------------------------------------
 
-# โจทย์ที่ 15: ตรวจสอบความถี่ในลิสต์
-data = [1, 2, 1, 3, 4, 1, 5]
-count_ones = 0
-for i in data :
-    if i == 1 :
-        count_ones += i
-print(count_ones)
+# ข้อที่ 9: การสร้างตารางสูตรคูณ (Generating a Multiplication Table)
+for multiplier in range(1,4) :
+    for multiplicand in range(1, 6) :
+        result = multiplier * multiplicand
+        print(f'{multiplier} X {multiplicand} = {result}')
+    print('')
+    
+
+
+# ข้อที่ 10: การนับคะแนนในห้องสอบ (Nested List Iteration and Summing)
+# class_scores = [
+#     [80, 90, 75, 95],  # นักเรียนคนที่ 1
+#     [65, 70, 85, 60],  # นักเรียนคนที่ 2
+#     [90, 85, 95, 100]  # นักเรียนคนที่ 3
+# ]
+
+# for student_index , student_scores in enumerate(class_scores) :
+#     total_score = 0
+#     for score in student_scores :
+#         total_score += score
+#     total_score = sum(student_scores)
+
+#     print(f'{student_index + 1} is {total_score}')
+
+
