@@ -50,29 +50,51 @@
 
 
 
+# size = 5
+# for i in range(size) :
+#     for j in range(size) :
+#         print('*' , end=' ')
+#     print()
+
+# size = 5
+# for i in range(size):
+#     # 1. ลูปพิมพ์ช่องว่าง (รันให้เสร็จก่อน)
+#     for j in range(size - i - 1):
+#         print(' ', end="")
+#     # 2. ลูปพิมพ์ดาว (อยู่ระดับเดียวกับลูป j แต่อยู่หลัง j)
+#     for k in range(i + 1):
+#         print('*', end=" ")
+#     # 3. เมื่อจบทั้งช่องว่างและดาวในแถวนั้นแล้ว ค่อยขึ้นบรรทัดใหม่
+#     print()
+
+            # *
+            # * *
+            # * * *
+            # * * * *
+            # * * * * *
+
+size = 5
+for i in range(size):
+    for j in range(size - i - 1):
+        print(' ', end="")
+    for k in range(i + 1):
+        print('*', end=" ")
+    print()
+
+for i in range(size -1 , 0 , -1):
+    for j in range(size - i):
+        print(' ', end="")
+    for k in range(i):
+        print('*', end=" ")
+    print()
 
 
-
-
-
-
-
-
-
-
-
-
-# ข้อที่ : การค้นหาดัชนีและ List ซ้อน List (index())
-# game_board = [
-#     ["X", "O", "X"], # R = 0 (แถวที่ 0)
-#     ["O", "X", "O"], # R = 1 (แถวที่ 1)
-#     ["X", "O", "E"]  # R = 2 (แถวที่ 2)  # 'E' คือช่องว่าง (Empty)
-# ]
-# for R in range(len(game_board)):
-#     print(R)
-#     curren_row  = game_board[R]
-#     print(curren_row)
-#     if "E" in curren_row :
-#         C = curren_row.index("E")
-#         print(f'Position "E" is row : {R} column : {C}')
-    
+            #     * 
+            #    * * 
+            #   * * *
+            #  * * * *
+            # * * * * *
+            #  * * * *
+            #   * * *
+            #    * *
+            #     *
