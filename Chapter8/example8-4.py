@@ -1,0 +1,11 @@
+string = "Programmer" 
+print(string[ : 10])
+print(string[::])
+print(string[7:])
+print(string[3:7])
+print(string[:-10])
+print(string[-6 : -5])
+print(string[-10 : -3])
+print(string[-6 : 10])
+print(string[-2 : -7])
+print(string[-3 :])

@@ -1,4 +1,4 @@
-from Error import Error
+from Chapter8.Error import Error
 
 price = int(input("Car pice >> "))
 if price < 0 :

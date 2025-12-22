@@ -1,4 +1,4 @@
-from Error import Error
+from Chapter8.Error import Error
 
 year = 12
 
