@@ -47,8 +47,6 @@ except IOError as err:
     print(f"เกิดข้อผิดพลาด: {err}")
 
 # read file 
-
-
 total_score = 0
 student_count = 0
 passed_students = 0
