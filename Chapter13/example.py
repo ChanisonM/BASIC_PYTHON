@@ -47,7 +47,7 @@ except IOError as err:
     print(f"เกิดข้อผิดพลาด: {err}")
 
 # read file 
-file_name = "scores.txt"
+
 
 total_score = 0
 student_count = 0
