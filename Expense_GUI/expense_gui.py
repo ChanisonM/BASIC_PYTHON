@@ -2,15 +2,16 @@ import tkinter as tk
 from tkinter import messagebox # เพิ่มตัวนี้เพื่อทำ Pop-up แจ้งเตือน
 import matplotlib.pyplot as plt
 
+# cutom someting
+titlebar = 'Expense Input Test'
+title = "โปรแกรมรายการอาหาร"
 
-title = 'Expense Input Test'
-
-# 1. สร้างหน้าต่างหลัก
+# Create window
 root = tk.Tk()
-root.title(title)
+root.title(titlebar)
 root.geometry('1280x720')
 
-# ไฟล์
+# file
 file_name = 'expenses.txt'
 
 
@@ -179,6 +180,36 @@ def update_data():
         messagebox.showerror("ผิดพลาด", "กรุณากรอกราคาเป็นตัวเลข")
 
 
+def search_data(even=None):
+    search_term = entry_search.get().lower()
+    listbox.delete(0 , tk.END)
+    try :
+        with open(file_name , mode='r' , encoding='utf-8') as f :
+            for line in f :
+                name , price = line.strip().split(',')
+                # ถ้าคำค้นหาอยู่ในชื่อรายการ (แบบไม่สนใจตัวพิมพ์เล็ก/ใหญ่)
+                if search_term in name.lower() :
+                    display_text = f'{name} -- {float(price):,.2f} บาท'
+                    listbox.insert(tk.END , display_text)
+    except FileNotFoundError: 
+        pass
+
+
+
+
+def clear_all():
+    confirm = messagebox.askyesno("ยืนยันขั้นเด็ดขาด", "คุณต้องการลบข้อมูลทั้งหมดในไฟล์ใช่หรือไม่?\n(การกระทำนี้เรียกคืนไม่ได้)")
+    if confirm :
+        try :
+            with open(file_name , mode='w' , encoding='utf-8') as f :
+                pass
+            load_to_listbox()
+            messagebox.showinfo("สำเร็จ", "ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว")
+        except :
+            messagebox.showerror("ผิดพลาด", f"ไม่สามารถล้างข้อมูลได้: {e}")
+
+
+
 def show_graph():
 
     # --- บรรทัดนี้เพื่อตั้งค่าฟอนต์ภาษาไทย ---
@@ -211,9 +242,9 @@ def show_graph():
 
 
 # --- 3. ส่วนการจัดวางหน้าจอ (UI) ---
-tk.Label(root , text="บันทึกรายการจ่าย" , font=("Arial", 18 , "bold")).pack(pady=10)
+tk.Label(root , text=title , font=("Arial", 18 , "bold")).pack(pady=10)
 
-tk.Label(root , text="รายการ" , font=("Arial", 18 , "bold")).pack()
+tk.Label(root , text="รายการอาหาร" , font=("Arial", 18 , "bold")).pack()
 entry_item = tk.Entry(root , font=("Arial", 18 , "bold"))
 entry_item.pack(pady=5)
 
@@ -222,16 +253,21 @@ tk.Label(root , text="ราคา" , font=("Arial", 18 , "bold")).pack()
 entry_price = tk.Entry(root , font=("Arial", 18 , "bold"))
 entry_price.pack(pady=5)
 
+# สร้าง Frame เพื่อวางปุ่มค้นหาคู่กับปุ่มแสดงทั้งหมด
+# Custom Frame
+cutom_frame = tk.Frame(root)
+cutom_frame.pack()
+
 # สร้างบันทึกข้อมูล
-btn_save = tk.Button(root , text="บันทึกข้อมูล" , font=("Arial", 18) , command=save_data , bg="green" , fg="white" ,)
-btn_save.pack(pady=10)
+btn_save = tk.Button(cutom_frame , text="บันทึกข้อมูล" , font=("Arial", 18) , command=save_data , bg="green" , fg="white" ,)
+btn_save.pack(side=tk.LEFT, padx=5 , pady=10)
 
 # สร้างปุ่มลบ
-btn_delete = tk.Button(root, text="ลบรายการที่เลือก", font=("Arial", 18) , command=delete_selected, bg="red", fg="white")
-btn_delete.pack(pady=5)
+btn_delete = tk.Button(cutom_frame, text="ลบรายการที่เลือก", font=("Arial", 18) , command=delete_selected, bg="red", fg="white")
+btn_delete.pack(side=tk.LEFT, padx=5)
 
-btn_edit = tk.Button(root, text="ดึงข้อมูลมาแก้ไข", font=("Arial", 18) , command=edit_selected, bg="orange", fg="black")
-btn_edit.pack(pady=5)
+btn_edit = tk.Button(cutom_frame, text="ดึงข้อมูลมาแก้ไข", font=("Arial", 18) , command=edit_selected, bg="orange", fg="black")
+btn_edit.pack(side=tk.LEFT, padx=5)
 
 # --- เพิ่มปุ่มในส่วน UI (ล่างสุด) ---
 btn_graph = tk.Button(root, text="📊 สรุปเป็นกราฟ", font=("Arial", 18), command=show_graph, bg="purple", fg="white")
@@ -240,7 +276,23 @@ btn_graph.pack(pady=5)
 
 
 
-# --- 4. ส่วนของ Listbox (หัวใจหลักของรอบนี้) ---
+tk.Label(root, text="🔍 ค้นหารายการ:", font=("Arial", 18)).pack()
+entry_search = tk.Entry(root, font=("Arial", 18))
+entry_search.pack(pady=2)
+# เชื่อมโยงช่องพิมพ์กับการปล่อยปุ่ม (KeyRelease)
+# ทุกครั้งที่พิมพ์หรือลบตัวอักษร ฟังก์ชัน search_data จะถูกเรียกทันที
+entry_search.bind("<KeyRelease>" , search_data)
+
+
+
+
+# --- ปุ่มล้างข้อมูลทั้งหมด (วางไว้ล่างสุดของหน้าจอ) ---
+btn_clear = tk.Button(root, text="⚠️ ล้างข้อมูลทั้งหมด", command=clear_all, bg="black", fg="white", font=("Arial", 10))
+btn_clear.pack(side=tk.BOTTOM, pady=10)
+
+
+
+# --- ส่วนของ Listbox (หัวใจหลักของรอบนี้) ---
 tk.Label(root , text="รายการทั้หมด : ", font=("Arial", 18)).pack()
 # สร้าง Listbox และปรับฟอนต์ให้ใหญ่ขึ้นที่นี่!
 listbox = tk.Listbox(root , width=40 , height=40 , font=("Tahoma" , 12))
