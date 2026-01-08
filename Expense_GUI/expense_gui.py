@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox # เพิ่มตัวนี้เพื่อทำ Pop-up แจ้งเตือน
-
+import matplotlib.pyplot as plt
 
 
 title = 'Expense Input Test'
@@ -8,10 +8,12 @@ title = 'Expense Input Test'
 # 1. สร้างหน้าต่างหลัก
 root = tk.Tk()
 root.title(title)
-root.geometry('400x500')
+root.geometry('1280x720')
 
 # ไฟล์
 file_name = 'expenses.txt'
+
+
 
 
 
@@ -177,7 +179,34 @@ def update_data():
         messagebox.showerror("ผิดพลาด", "กรุณากรอกราคาเป็นตัวเลข")
 
 
+def show_graph():
 
+    # --- บรรทัดนี้เพื่อตั้งค่าฟอนต์ภาษาไทย ---
+    plt.rcParams['font.family'] = 'Tahoma'  # หรือ 'Microsoft Sans Serif'
+    plt.rcParams['font.size'] = 12          # ปรับขนาดตัวอักษรในกราฟ
+
+    names = []
+    prices = []
+    try :  
+       with open(file_name , mode='r' , encoding='utf-8') as f :
+        for line in f :
+            name , price = line.strip().split(',')
+            names.append(name)
+            prices.append(float(price))
+            
+        if not names :
+            messagebox.showinfo("ข้อมูลว่างเปล่า", "ไม่มีข้อมูลสำหรับสร้างกราฟ")
+            return
+        
+        # สร้างหน้าต่างกราฟ
+        plt.figure(figsize=(8,6))
+        plt.bar(names , prices , color = "skyblue")
+        plt.xlabel('รายการ')
+        plt.ylabel('ราคา')
+        plt.title('สรุปค่าใช้จ่ายของฉัน')
+        plt.show()# กราฟจะเด้งขึ้นมาเป็นหน้าต่างใหม่
+    except Exception as e:
+        messagebox.showerror("ผิดพลาด", f"ไม่สามารถสร้างกราฟได้: {e}")
 
 
 
@@ -203,6 +232,12 @@ btn_delete.pack(pady=5)
 
 btn_edit = tk.Button(root, text="ดึงข้อมูลมาแก้ไข", font=("Arial", 18) , command=edit_selected, bg="orange", fg="black")
 btn_edit.pack(pady=5)
+
+# --- เพิ่มปุ่มในส่วน UI (ล่างสุด) ---
+btn_graph = tk.Button(root, text="📊 สรุปเป็นกราฟ", font=("Arial", 18), command=show_graph, bg="purple", fg="white")
+btn_graph.pack(pady=5)
+
+
 
 
 # --- 4. ส่วนของ Listbox (หัวใจหลักของรอบนี้) ---
