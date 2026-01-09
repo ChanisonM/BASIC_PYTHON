@@ -22,3 +22,4 @@ shape = Shape()
 
 print(shape.circle_area(10))
 print(shape.rect_area(10,-20))
+print(shape.rect_area(10,20))
