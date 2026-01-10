@@ -38,13 +38,13 @@ class Calculator :
                         # (2) 10 * 100 จึงได้ผลลัพธ์เท่ากับ 1,000 ครับ
     
 print(
-    # Calculator.add(10 , 20) ,
-    # Calculator.subtract(20 , 5) ,
-    # Calculator.get_pi() ,
-    # Calculator.increment(99) , 
-    # Calculator.decrement(99) ,
-    # Calculator.multiply(2 , 2) ,
-    # Calculator.double_value(10) , 
+    Calculator.add(10 , 20) ,
+    Calculator.subtract(20 , 5) ,
+    Calculator.get_pi() ,
+    Calculator.increment(99) , 
+    Calculator.decrement(99) ,
+    Calculator.multiply(2 , 2) ,
+    Calculator.double_value(10) , 
     Calculator.square(10) ,
     Calculator.cube(10)
 )
