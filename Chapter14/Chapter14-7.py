@@ -1,10 +1,12 @@
 
 class Circle :
+    PI = 3.14
+    
     def circle_area(self , radius):
-        return 3.14 * (radius ** 2)
+        return self.PI * (radius ** 2)
     
     def circle_perimeter(self , radius):
-        return 2 * 3.14 * radius
+        return 2 * self.PI * radius
 
 class Cylinder(Circle):
     def cylinder_voulme(self , radius , height):
