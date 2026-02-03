@@ -140,6 +140,20 @@ class AddressBookApp:
         if not name or not phone:
             messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
             return
+        
+
+        if not phone.isdigit():
+            messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องเป็นตัวเลขเท่านั้น!")
+            return  
+        
+        if len(phone) > 10 :
+            messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องไม่เกิน 10 หลัก!")
+            return
+        
+        if len(phone) < 9 :
+            messagebox.showerror("Error", "เบอร์โทรศัพท์สั้นเกินไป!")
+            return
+
 
         new_path = self.upload_and_copy_image(self.selected_image_path)
         data = [name, self.ent_address.get().strip(), phone, self.ent_email.get().strip(), new_path]
