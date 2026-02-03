@@ -56,6 +56,13 @@ class AddressBookDB :
         self.cursor.execute(sql , [record_id])
         self.conn.commit()
         return self.cursor.rowcount
+    
+    def search(self , keyword):
+        # ค้นหาชื่อที่มีคำที่กำหนด (ใช้ LIKE %...%)
+        query = "SELECT * FROM address_book WHERE name LIKE ?"
+        self.cursor.execute(query , ('%' + keyword +'%',))
+        return self.cursor.fetchall()
+
 
 
     # ฟังก์ชันปิดฐานข้อมูลเพื่อคืนทรัพยากร์ของระบบ
