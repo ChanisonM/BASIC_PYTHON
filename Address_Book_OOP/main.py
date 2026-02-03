@@ -1,265 +1,219 @@
 from tkinter import *
-from tkinter import messagebox
-from database import AddressBookDB # ดึง databse ชื่อ Class AddressBookDB มาทำงาน
-from tkinter import filedialog
-from PIL import Image , ImageTk
+from tkinter import messagebox, filedialog
+from database import AddressBookDB
+from PIL import Image, ImageTk
 from datetime import datetime
-
 import os
 import shutil
 
-
 class AddressBookApp:
-    def __init__(self , root):
+    def __init__(self, root):
         self.root = root 
-        self.root.title("Address Book OOP Version")
+        self.root.title("Address Book OOP - Professional Edition")
         self.root.geometry('900x600')
-    
-        # เรียกใช้งาน Database
+        
+        # 1. Initialize Backend & Folders
         self.db = AddressBookDB()
-
-        # สร้างโฟลเดอร์ images ถ้ายังไม่มี
-        if not os.path.exists("images") :
-            os.makedirs("images")
-
-
+        self._prepare_storage()
+        
+        # 2. State Management
         self.dataset = []
-        # สร้าง UI
+        self.selected_image_path = ""
+        
+        # 3. Build UI
         self.setup_ui()
-
-        # ทดสอบดึงข้อมูลมาแสดงทันทีที่เปิดโปรแกรม
         self.refresh_grid()
 
-    
+    def _prepare_storage(self):
+        """จัดการเตรียมโฟลเดอร์เก็บรูป"""
+        if not os.path.exists("images"):
+            os.makedirs("images")
+
     def setup_ui(self):
+        """ส่วนหลักในการวาง Layout"""
+        # Header
+        Label(self.root, text="ระบบจัดการสมุดรายชื่อ", fg="#2c3e50", font=("Arial", 16, "bold")).pack(pady=10)
 
-        def add_grid(w , r , c):
-            w.grid(row = r , column = c)
+        # แบ่งหน้าจอเป็น 2 ฝั่ง (ซ้าย: รายการ, ขวา: ฟอร์ม)
+        main_container = Frame(self.root)
+        main_container.pack(fill=BOTH, expand=True, padx=10)
 
+        self._setup_left_panel(main_container)
+        self._setup_right_panel(main_container)
 
-        # สร้าง Label ง่ายๆ มาทดสอบก่อน
-        Label(self.root, text="ยินดีด้วย! หน้าจอเชื่อมต่อกับ Database สำเร็จแล้ว", fg="green").pack(pady=20)
+    def _setup_left_panel(self, parent):
+        """ฝั่งซ้าย: ค้นหาและรายชื่อ"""
+        left_frame = Frame(parent)
+        left_frame.pack(side=LEFT, fill=Y, padx=10)
 
-        # Search Entry
-        Label(self.root , text="ค้นหารายชื่อ : ").pack()
-        self.ent_search = Entry(self.root , width=50)
+        Label(left_frame, text="ค้นหา:").pack(anchor=W)
+        self.ent_search = Entry(left_frame, width=40)
         self.ent_search.pack(pady=5)
-        # ผูก Event เมื่อมีการพิมพ์ (ปล่อยคีย์บอร์ด) ให้ไปที่ฟังก์ชัน search_data
-        self.ent_search.bind('<KeyRelease>' , self.search_data)
+        self.ent_search.bind('<KeyRelease>', self.search_data)
 
+        self.listbox = Listbox(left_frame, width=40, height=20, exportselection=0)
+        self.listbox.bind('<<ListboxSelect>>', self.on_listbox_select)
+        self.listbox.pack(pady=5)
+
+    def _setup_right_panel(self, parent):
+        """ฝั่งขวา: รายละเอียดข้อมูลและรูปภาพ"""
+        self.frame_info = LabelFrame(parent, text=" ข้อมูลส่วนตัว ", padx=10, pady=10 )
+        self.frame_info.pack(side=RIGHT, fill=BOTH, expand=True)
+
+        # Input Fields Container
+        fields_frame = Frame(self.frame_info)
+        fields_frame.grid(row=0, column=0, sticky=NSEW )
+
+        # สร้าง Entry Fields (จัด Group เพื่อความสวยงาม)
+        self.ent_name = self._create_input(fields_frame, "ชื่อ:", 0)
+        self.ent_address = self._create_input(fields_frame, "ที่อยู่:", 1)
+        self.ent_phone = self._create_input(fields_frame, "เบอร์โทร:", 2)
+        self.ent_email = self._create_input(fields_frame, "อีเมล:", 3)
+
+        # Image Display Area
+        self._setup_image_section()
         
-        # สร้าง Listbox มาลองโชว์รายชื่อ
-        self.listbox = Listbox(self.root, width=50 , exportselection=0)
-        self.listbox.bind('<<ListboxSelect>>' , self.on_listbox_select)
-        self.listbox.pack(pady=10)
+        # Buttons Area
+        self._setup_button_actions()
 
-        # เฟรมสำหรับข้อมูล (Information Frame)
-        self.frame_info = LabelFrame(self.root , text="รายละเอียดข้อมูล")
-        self.frame_info.pack(side=RIGHT , padx=20 , pady=10 , fill=BOTH , expand=TRUE)
+    def _create_input(self, parent, label_text, row):
+        """Helper สร้าง Label + Entry แบบลดโค้ดซ้ำซ้อน"""
+        Label(parent, text=label_text).grid(row=row, column=0, sticky=W, pady=5)
+        entry = Entry(parent, width=35)
+        entry.grid(row=row, column=1, padx=10, pady=5)
+        return entry
 
-        # สร้างฟิลด์กรอกข้อมูล
-        self.label_name = Label(self.frame_info , text="ชื่อ : ")
-        add_grid(self.label_name , r= 0 , c=0)
-        self.ent_name = Entry(self.frame_info , width=30)
-        add_grid(self.ent_name , r = 0 , c = 1)
+    def _setup_image_section(self):
+        """ส่วนแสดงรูปภาพ"""
+        # self.img_label = Label(self.frame_info, text="No Image", bg="red", width=30, height=10) 
+        # self.img_label.grid(row=0, column=1,  padx=20 , pady=10, sticky=N)
 
-        self.label_address = Label(self.frame_info , text="ที่อยู่ : ")
-        add_grid(self.label_address , r= 1 , c=0)
-        self.ent_address = Entry(self.frame_info , width=30)
-        add_grid(self.ent_address , r=1 ,c=1)
-
-        self.label_phone = Label(self.frame_info , text="เบอร์โทร : ")
-        add_grid(self.label_phone , r= 2 , c=0)
-        self.ent_phone = Entry(self.frame_info , width=30)
-        add_grid(self.ent_phone , r=2 ,c=1)
-
-        self.label_email = Label(self.frame_info , text="อีเมล : ")
-        add_grid(self.label_email , r= 3 , c=0)
-        self.ent_email = Entry(self.frame_info , width=30)
-        add_grid(self.ent_email , r=3 ,c=1)
-
-
-        btn_frame = Frame(self.frame_info)
-        btn_frame.grid(row=4, column=0, columnspan=2, pady=10)
-        Button(btn_frame, text="บันทึกใหม่", command=self.save_data).pack(side=LEFT, padx=2)
-        Button(btn_frame, text="แก้ไข", command=self.edit_data).pack(side=LEFT, padx=2)
-        Button(btn_frame, text="ลบ", command=self.delete_data, bg="red", fg="white").pack(side=LEFT, padx=2)
-        Button(btn_frame, text="ล้างช่องกรอก", command=self.clear_entries).pack(side=LEFT, padx=2)
-        
 
         self.img_label = Label(self.frame_info, text="No Image", bg="lightgray") 
-        self.img_label.grid(row=0, column=2, rowspan=4, padx=20, pady=10, sticky=N)
-        self.btn_browse = Button(self.frame_info , text="Upload" , command=self.browse_image)
-        self.btn_browse.grid(row=4, column=2, pady=5)
-
-        # ตัวแปรสำหรับเก็บ Path รูปที่เลือก
-        self.selected_image_path = ""
-
-
-
-    def refresh_grid(self):
-        # ดึงข้อมูลจากฐานข้อมูลผ่านเครื่องยนต์ (db.fetch_all)
-        self.dataset = self.db.fetch_all()
+        self.img_label.grid(row=0, column=2, padx=0, pady=0, sticky=NW)
+       
         
-        # ล้าง Listbox และใส่ชื่อเข้าไปใหม่
-        self.listbox.delete(0, END)
-        for row in self.dataset:
-            # row[1] คือคอลัมน์ NAME
-            self.listbox.insert(END, row[1])
+        Button(self.frame_info, text="เลือกรูปภาพ", command=self.browse_image).grid(row=1, column=2, pady=5)
 
-    def upload_and_copy_image(self , source_path):
+
+
+
+
+
+    def _setup_button_actions(self):
+        """ส่วนปุ่มคำสั่งหลัก"""
+        btn_container = Frame(self.frame_info)
+        btn_container.grid(row=4, column=0, columnspan=2, pady=20)
+        
+        Button(btn_container, text="บันทึกใหม่", command=self.save_data, bg="#27ae60", fg="white", width=10).pack(side=LEFT, padx=5)
+        Button(btn_container, text="แก้ไข", command=self.edit_data, bg="#2980b9", fg="white", width=10).pack(side=LEFT, padx=5)
+        Button(btn_container, text="ลบ", command=self.delete_data, bg="#c0392b", fg="white", width=10).pack(side=LEFT, padx=5)
+        Button(btn_container, text="ล้างช่องกรอก", command=self.clear_entries, width=10).pack(side=LEFT, padx=5)
+
+    # --- Logic Methods (ยังคงเดิมแต่จัดระเบียบใหม่) ---
+    
+    def upload_and_copy_image(self, source_path):
         if not source_path or not os.path.exists(source_path):
             return ""
-        
-        # 1. ดึงนามสกุลไฟล์เดิม เช่น .jpg หรือ .png
         ext = os.path.splitext(source_path)[1]
-
-        # 2. สร้างชื่อไฟล์ใหม่จาก Timestamp
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        new_filename = f'img_{timestamp}{ext}'
-
-        # 3. กำหนดปลายทาง (Destination)
-        destination = os.path.join('images' , new_filename)
-
-        # 4. ก๊อปปี้ไฟล์จริง
-        shutil.copy(source_path , destination)
+        new_filename = f"img_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
+        destination = os.path.join('images', new_filename)
+        shutil.copy(source_path, destination)
         return destination
 
-    def save_data(self):
-        # 1. ดึงข้อมูลจากช่องกรอก (Entry/Text)
-        name = self.ent_name.get().strip()
-        address = self.ent_address.get().strip()
-        phone = self.ent_phone.get().strip()
-        email = self.ent_email.get().strip()
+    def refresh_grid(self):
+        self.dataset = self.db.fetch_all()
+        self.listbox.delete(0, END)
+        for row in self.dataset:
+            self.listbox.insert(END, row[1])
 
-        # 2. ตรวจสอบเบื้องต้น
-        if not name or not phone :
-            messagebox.showwarning("Warning" , "กรุณากรอกชื่อและเบอร์โทร!")
+    def search_data(self, event=None):
+        keyword = self.ent_search.get().strip()
+        self.dataset = self.db.search(keyword) if keyword else self.db.fetch_all()
+        self.listbox.delete(0, END)
+        for row in self.dataset:
+            self.listbox.insert(END, row[1])
+
+    def save_data(self):
+        name = self.ent_name.get().strip()
+        phone = self.ent_phone.get().strip()
+        if not name or not phone:
+            messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
             return
 
-
-        # เปลี่ยนจากการเก็บ Path ตรงๆ เป็นการเรียกฟังก์ชันก๊อปปี้ก่อน
         new_path = self.upload_and_copy_image(self.selected_image_path)
-
-        # 3. สั่งเครื่องยนต์ (database.py) ให้ทำงาน
-        data = [name  , address , phone , email , new_path]
+        data = [name, self.ent_address.get().strip(), phone, self.ent_email.get().strip(), new_path]
         self.db.insert(data)
-        self.selected_image_path = ""
-
-        # 4. อัปเดตหน้าจอ
-        messagebox.showinfo("Success" , "บันทึกข้อมูลเรียบร้อย!")
+        
+        messagebox.showinfo("สำเร็จ", "บันทึกข้อมูลแล้ว")
         self.refresh_grid()
         self.clear_entries()
 
     def edit_data(self):
-        
         selection = self.listbox.curselection()
-        if not selection :
-            messagebox.showwarning("Warning" , "กรุณาเลือกรายชื่อที่จะแก้ไขจากด้านบน!")
-            return 
+        if not selection: return
         
-        # ดึง ID ของแถวที่เลือกจาก dataset
         index = selection[0]
-        record_id  = self.dataset[index][0]
+        record_id = self.dataset[index][0]
+        old_path = self.dataset[index][5]
+        new_path = old_path
 
-        # 1. ดึง Path รูปเก่าจากตัวแปร dataset ก่อนแก้ไข
-        old_image_path = self.dataset[index][5]
-        new_path = old_image_path
-        # 2. ถ้ามีการเลือกรูปใหม่ใน selected_image_path
-        if self.selected_image_path :
+        if self.selected_image_path:
             new_path = self.upload_and_copy_image(self.selected_image_path)
-            # ลบรูปเก่าทิ้ง (ถ้ามี)
-            if old_image_path and os.path.exists(old_image_path) :
-                try :
-                    os.remove(old_image_path)
-                except :
-                    pass
+            if old_path and os.path.exists(old_path):
+                try: os.remove(old_path)
+                except: pass
             self.selected_image_path = ""
 
-        data = [
-            self.ent_name.get().strip(),
-            self.ent_address.get().strip(),
-            self.ent_phone.get().strip(),
-            self.ent_email.get().strip(),
-            # self.selected_image_path ,
-            new_path
-        ]
+        data = [self.ent_name.get().strip(), self.ent_address.get().strip(), 
+                self.ent_phone.get().strip(), self.ent_email.get().strip(), new_path]
 
-        if messagebox.askokcancel("Confirm", "คุณต้องการแก้ไขข้อมูลนี้ใช่หรือไม่?") :
-            self.db.update(data , record_id)
-            messagebox.showinfo("Success" , "แก้ไขข้อมูลเรียบร้อย!")
+        if messagebox.askokcancel("ยืนยัน", "แก้ไขข้อมูลนี้ใช่หรือไม่?"):
+            self.db.update(data, record_id)
             self.refresh_grid()
-            print(f'Data : {data}')
-
+            messagebox.showinfo("สำเร็จ", "แก้ไขข้อมูลแล้ว")
 
     def delete_data(self):
         selection = self.listbox.curselection()
-        if not selection :
-            messagebox.showwarning("Warning", "กรุณาเลือกรายชื่อที่จะลบ!")      
-            return
-
+        if not selection: return
+        
         index = selection[0]
         row = self.dataset[index]
-        record_id = row[0]
-        name = row[1]
-        image_path = row[5]
-
-        if messagebox.askokcancel("Confirm Delete", f"คุณต้องการลบคุณ '{name}' ใช่หรือไม่?"):
-            self.db.delete(record_id)
-            try :
-                if image_path and os.path.exists(image_path) :
-                    os.remove(image_path)
-                    print(f"Deleted {image_path}")
-            except Exception as e :
-                print(f'Error Delete {e}')
-
-            messagebox.showinfo("Deleted", "ลบข้อมูลเรียบร้อย!")
+        if messagebox.askokcancel("ลบข้อมูล", f"ต้องการลบ '{row[1]}' ?"):
+            self.db.delete(row[0])
+            if row[5] and os.path.exists(row[5]):
+                try: os.remove(row[5])
+                except: pass
             self.refresh_grid()
             self.clear_entries()
-        
-        
-    
+
     def clear_entries(self):
-        self.ent_name.delete(0 , END)
-        self.ent_address.delete(0 , END)
-        self.ent_phone.delete(0 , END)
-        self.ent_email.delete(0 , END)
+        for entry in [self.ent_name, self.ent_address, self.ent_phone, self.ent_email]:
+            entry.delete(0, END)
         self.img_label.config(image="", text="No Image")
+        self.selected_image_path = ""
 
-    def on_listbox_select(self , even):
-        # 1. ตรวจสอบว่ามีการเลือกข้อมูลจริงไหม
+    def on_listbox_select(self, event):
         selection = self.listbox.curselection()
-        if not selection : return
-
-        # 2. ดึง Index ที่เลือก และไปหยิบข้อมูลจาก self.dataset
-        index = selection[0]
-        row = self.dataset[index]
-
-        # 3. ล้างช่องกรอกเดิมก่อน
+        if not selection: return
+        row = self.dataset[selection[0]]
         self.clear_entries()
-
-        # 4. เอาข้อมูลใหม่ไปวางในแต่ละช่อง
-        # หมายเหตุ: ถ้าใช้ ID เป็น Entry อย่าลืมใส่ id ไปด้วยถ้าคุณสร้างไว้
-        self.ent_name.insert(0 , row[1])
-        self.ent_address.insert(0,row[2])
-        self.ent_phone.insert(0 , row[3])
-        self.ent_email.insert(0 , row[4])
+        self.ent_name.insert(0, row[1])
+        self.ent_address.insert(0, row[2])
+        self.ent_phone.insert(0, row[3])
+        self.ent_email.insert(0, row[4])
         self.show_image(row[5])
 
-
-
     def browse_image(self):
-        file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png *.jpeg")])
-        if file_path:
-            self.selected_image_path = file_path
-            self.show_image(file_path)
-        
-   
+        path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png *.jpeg")])
+        if path:
+            self.selected_image_path = path
+            self.show_image(path)
+
     def show_image(self, path):
         try:
             if path and os.path.exists(path):
-                img = Image.open(path)
-                img = img.resize((200, 200), Image.Resampling.LANCZOS) # ปรับขนาดรูป
+                img = Image.open(path).resize((120, 120))
                 self.photo = ImageTk.PhotoImage(img)
                 self.img_label.config(image=self.photo, text="")
             else:
@@ -267,20 +221,7 @@ class AddressBookApp:
         except:
             self.img_label.config(image="", text="Error Loading")
 
-
-    def search_data(self , event=None):
-        keyword = self.ent_search.get().strip()
-        if keyword :
-            self.dataset = self.db.search(keyword)
-        else :
-            self.dataset = self.db.fetch_all()
-
-        # ล้าง Listbox และใส่ข้อมูลที่กรองแล้วลงไป
-        self.listbox.delete(0 , END)
-        for row in self.dataset :
-            self.listbox.insert(END , row[1])
-
-if __name__ == "__main__" :
+if __name__ == "__main__":
     root = Tk()
     app = AddressBookApp(root)
     root.mainloop()
