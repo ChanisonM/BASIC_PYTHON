@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 from datetime import datetime
 import os
 import shutil
+import re
 
 class AddressBookApp:
     def __init__(self, root):
@@ -23,6 +24,19 @@ class AddressBookApp:
         # 3. Build UI
         self.setup_ui()
         self.refresh_grid()
+
+    def validate_phone(self, action, value_if_allowed):
+        # action '1' คือการพิมพ์เพิ่ม (insert)
+        if action == '1':
+            # ต้องเป็นตัวเลขเท่านั้น และความยาวรวมต้องไม่เกิน 10
+            if not value_if_allowed.isdigit() or len(value_if_allowed) > 10:
+                return False
+        return True
+    
+    def is_valid_email(self, email):
+        # รูปแบบมาตรฐาน: ตัวอักษร@ตัวอักษร.ตัวอักษร
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return re.match(pattern, email) is not None
 
     def _prepare_storage(self):
         """จัดการเตรียมโฟลเดอร์เก็บรูป"""
@@ -79,7 +93,16 @@ class AddressBookApp:
     def _create_input(self, parent, label_text, row):
         """Helper สร้าง Label + Entry แบบลดโค้ดซ้ำซ้อน"""
         Label(parent, text=label_text).grid(row=row, column=0, sticky=W, pady=5)
-        entry = Entry(parent, width=35)
+        
+
+        # --- ส่วนที่เพิ่มเข้าไป ---
+        if label_text == "เบอร์โทร:":
+            vcmd = (self.root.register(self.validate_phone), '%d', '%P')
+            entry = Entry(parent, width=35, validate='key', validatecommand=vcmd)
+        else:
+            entry = Entry(parent, width=35)
+        # -----------------------
+        # entry = Entry(parent, width=35)
         entry.grid(row=row, column=1, padx=10, pady=5)
         return entry
 
@@ -137,6 +160,7 @@ class AddressBookApp:
     def save_data(self):
         name = self.ent_name.get().strip()
         phone = self.ent_phone.get().strip()
+        email = self.ent_email.get().strip()
         if not name or not phone:
             messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
             return
@@ -154,6 +178,10 @@ class AddressBookApp:
             messagebox.showerror("Error", "เบอร์โทรศัพท์สั้นเกินไป!")
             return
 
+        if email and not self.is_valid_email(email):
+            messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง! (ตัวอย่าง: name@email.com)")
+            return
+
 
         new_path = self.upload_and_copy_image(self.selected_image_path)
         data = [name, self.ent_address.get().strip(), phone, self.ent_email.get().strip(), new_path]
@@ -165,7 +193,11 @@ class AddressBookApp:
 
     def edit_data(self):
         selection = self.listbox.curselection()
-        if not selection: return
+        email = self.ent_email.get().strip()
+        
+        if not selection: 
+            messagebox.showwarning("Warning" , "กรุณาเลือกรายชื่อที่จะแก้ไข!")
+            return
         
         index = selection[0]
         record_id = self.dataset[index][0]
@@ -179,6 +211,10 @@ class AddressBookApp:
                 except: pass
             self.selected_image_path = ""
 
+        if email and not self.is_valid_email(email):
+            messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง! (ตัวอย่าง: name@email.com)")
+            return
+
         data = [self.ent_name.get().strip(), self.ent_address.get().strip(), 
                 self.ent_phone.get().strip(), self.ent_email.get().strip(), new_path]
 
@@ -189,7 +225,9 @@ class AddressBookApp:
 
     def delete_data(self):
         selection = self.listbox.curselection()
-        if not selection: return
+        if not selection: 
+            messagebox.showwarning("Warning", "กรุณาเลือกรายชื่อที่จะลบ!")
+            return
         
         index = selection[0]
         row = self.dataset[index]
