@@ -180,27 +180,29 @@ class AddressBookApp:
         phone = self.ent_phone.get().strip()
         email = self.ent_email.get().strip()
         
-        if not name or not phone:
-            messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
-            return
+        # if not name or not phone:
+        #     messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
+        #     return
         
 
-        if not phone.isdigit():
-            messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องเป็นตัวเลขเท่านั้น!")
-            return  
+        # if not phone.isdigit():
+        #     messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องเป็นตัวเลขเท่านั้น!")
+        #     return  
         
-        if len(phone) > 10 :
-            messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องไม่เกิน 10 หลัก!")
-            return
+        # if len(phone) > 10 :
+        #     messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องไม่เกิน 10 หลัก!")
+        #     return
         
-        if len(phone) < 9 :
-            messagebox.showerror("Error", "เบอร์โทรศัพท์สั้นเกินไป!")
-            return
+        # if len(phone) < 9 :
+        #     messagebox.showerror("Error", "เบอร์โทรศัพท์สั้นเกินไป!")
+        #     return
 
-        if email and not self.is_valid_email(email):
-            messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง! (ตัวอย่าง: name@email.com)")
-            return
+        # if email and not self.is_valid_email(email):
+        #     messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง! (ตัวอย่าง: name@email.com)")
+        #     return
         
+
+        if not self.validate_inputs(): return  # ถ้าเช็กไม่ผ่านก็หยุดทำงาน
         
 
 
@@ -234,27 +236,29 @@ class AddressBookApp:
             self.selected_image_path = ""
 
 
-        if not name or not phone:
-            messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
-            return
+        # if not name or not phone:
+        #     messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
+        #     return
         
 
-        if not phone.isdigit():
-            messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องเป็นตัวเลขเท่านั้น!")
-            return  
+        # if not phone.isdigit():
+        #     messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องเป็นตัวเลขเท่านั้น!")
+        #     return  
         
-        if len(phone) > 10 :
-            messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องไม่เกิน 10 หลัก!")
-            return
+        # if len(phone) > 10 :
+        #     messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องไม่เกิน 10 หลัก!")
+        #     return
         
-        if len(phone) < 9 :
-            messagebox.showerror("Error", "เบอร์โทรศัพท์สั้นเกินไป!")
-            return
+        # if len(phone) < 9 :
+        #     messagebox.showerror("Error", "เบอร์โทรศัพท์สั้นเกินไป!")
+        #     return
 
 
-        if email and not self.is_valid_email(email):
-            messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง! (ตัวอย่าง: name@email.com)")
-            return
+        # if email and not self.is_valid_email(email):
+        #     messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง! (ตัวอย่าง: name@email.com)")
+        #     return
+
+        if not self.validate_inputs(): return  # ถ้าเช็กไม่ผ่านก็หยุดทำงาน
 
         data = [self.ent_name.get().strip(), self.ent_address.get().strip(), 
                 self.ent_phone.get().strip(), self.ent_email.get().strip(), new_path]
