@@ -37,6 +37,26 @@ class AddressBookApp:
         # รูปแบบมาตรฐาน: ตัวอักษร@ตัวอักษร.ตัวอักษร
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         return re.match(pattern, email) is not None
+    
+    def validate_inputs(self):
+        """รวมศูนย์การเช็กความถูกต้องของข้อมูลทั้งหมด"""
+        name = self.ent_name.get().strip()
+        phone = self.ent_phone.get().strip()
+        email = self.ent_email.get().strip()
+
+        if not name or not phone:
+            messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
+            return False
+        
+        if len(phone) < 9:
+            messagebox.showerror("Error", "เบอร์โทรศัพท์สั้นเกินไป!")
+            return False
+
+        if email and not self.is_valid_email(email):
+            messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง!")
+            return False
+            
+        return True
 
     def _prepare_storage(self):
         """จัดการเตรียมโฟลเดอร์เก็บรูป"""
@@ -180,6 +200,8 @@ class AddressBookApp:
         if email and not self.is_valid_email(email):
             messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง! (ตัวอย่าง: name@email.com)")
             return
+        
+        
 
 
         new_path = self.upload_and_copy_image(self.selected_image_path)
