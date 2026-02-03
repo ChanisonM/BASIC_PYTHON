@@ -161,6 +161,7 @@ class AddressBookApp:
         name = self.ent_name.get().strip()
         phone = self.ent_phone.get().strip()
         email = self.ent_email.get().strip()
+        
         if not name or not phone:
             messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
             return
@@ -194,7 +195,8 @@ class AddressBookApp:
     def edit_data(self):
         selection = self.listbox.curselection()
         email = self.ent_email.get().strip()
-        
+        phone = self.ent_phone.get().strip()
+        name = self.ent_name.get().strip()
         if not selection: 
             messagebox.showwarning("Warning" , "กรุณาเลือกรายชื่อที่จะแก้ไข!")
             return
@@ -210,6 +212,25 @@ class AddressBookApp:
                 try: os.remove(old_path)
                 except: pass
             self.selected_image_path = ""
+
+
+        if not name or not phone:
+            messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
+            return
+        
+
+        if not phone.isdigit():
+            messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องเป็นตัวเลขเท่านั้น!")
+            return  
+        
+        if len(phone) > 10 :
+            messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องไม่เกิน 10 หลัก!")
+            return
+        
+        if len(phone) < 9 :
+            messagebox.showerror("Error", "เบอร์โทรศัพท์สั้นเกินไป!")
+            return
+
 
         if email and not self.is_valid_email(email):
             messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง! (ตัวอย่าง: name@email.com)")
