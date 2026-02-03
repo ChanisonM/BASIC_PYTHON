@@ -108,8 +108,6 @@ class AddressBookApp:
 
     def _setup_image_section(self):
         """ส่วนแสดงรูปภาพ"""
-        # self.img_label = Label(self.frame_info, text="No Image", bg="red", width=30, height=10) 
-        # self.img_label.grid(row=0, column=1,  padx=20 , pady=10, sticky=N)
 
 
         self.img_label = Label(self.frame_info, text="No Image", bg="lightgray") 
