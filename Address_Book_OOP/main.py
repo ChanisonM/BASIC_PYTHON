@@ -6,12 +6,29 @@ from datetime import datetime
 import os
 import shutil
 import re
+import csv
+
+# import PDF from lib reportlab
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage
+from reportlab.lib.styles import getSampleStyleSheet , ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.colors import black
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
 
 class AddressBookApp:
     def __init__(self, root):
         self.root = root 
         self.root.title("Address Book OOP - Professional Edition")
-        self.root.geometry('900x600')
+
+        # fullscreen
+        # self.root.geometry('900x600')
+        # self.root.attributes('-fullscreen', True)
+        self.root.state('zoomed')
         
         # 1. Initialize Backend & Folders
         self.db = AddressBookDB()
@@ -85,9 +102,30 @@ class AddressBookApp:
         self.ent_search.pack(pady=5)
         self.ent_search.bind('<KeyRelease>', self.search_data)
 
-        self.listbox = Listbox(left_frame, width=40, height=20, exportselection=0)
-        self.listbox.bind('<<ListboxSelect>>', self.on_listbox_select)
-        self.listbox.pack(pady=5)
+        # --- สร้างเฟรมครอบ Listbox กับ Scrollbar ---
+        list_container = Frame(left_frame)
+        list_container.pack(pady=5 , fill=BOTH , expand=True)
+
+        # สร้าง Scrollbar
+        scrollbar = Scrollbar(list_container , orient=VERTICAL)
+        # เชื่อม Listbox เข้ากับ Scrollbar
+        self.listbox = Listbox(
+            list_container , width=35  , height=28 ,
+            exportselection=0,
+            selectmode=MULTIPLE ,
+            yscrollcommand=scrollbar.set
+        )
+        scrollbar.config(command=self.listbox.yview)
+
+        # วางตำแหน่ง
+        self.listbox.pack(side=LEFT , fill=BOTH  , expand=True)
+        scrollbar.pack(side=RIGHT , fill=Y)
+
+        self.listbox.bind('<<ListboxSelect>>' ,     self.on_listbox_select)
+
+        # self.listbox = Listbox(left_frame, width=40, height=20, exportselection=0 ,selectmode=MULTIPLE)
+        # self.listbox.bind('<<ListboxSelect>>', self.on_listbox_select)
+        # self.listbox.pack(pady=5)
 
     def _setup_right_panel(self, parent):
         """ฝั่งขวา: รายละเอียดข้อมูลและรูปภาพ"""
@@ -136,11 +174,6 @@ class AddressBookApp:
         
         Button(self.frame_info, text="เลือกรูปภาพ", command=self.browse_image).grid(row=1, column=2, pady=5)
 
-
-
-
-
-
     def _setup_button_actions(self):
         """ส่วนปุ่มคำสั่งหลัก"""
         btn_container = Frame(self.frame_info)
@@ -150,17 +183,37 @@ class AddressBookApp:
         Button(btn_container, text="แก้ไข", command=self.edit_data, bg="#2980b9", fg="white", width=10).pack(side=LEFT, padx=5)
         Button(btn_container, text="ลบ", command=self.delete_data, bg="#c0392b", fg="white", width=10).pack(side=LEFT, padx=5)
         Button(btn_container, text="ล้างช่องกรอก", command=self.clear_entries, width=10).pack(side=LEFT, padx=5)
-
+        Button(btn_container, text="Export CSV", command=self.export_to_csv, bg="#f39c12", fg="white", width=10).pack(side=LEFT, padx=5)
+        Button(btn_container, text="พิมพ์ PDF", command=self.print_to_pdf, bg="#8e44ad").pack(side=LEFT, padx=5)
     # --- Logic Methods (ยังคงเดิมแต่จัดระเบียบใหม่) ---
-    
     def upload_and_copy_image(self, source_path):
         if not source_path or not os.path.exists(source_path):
             return ""
+        
         ext = os.path.splitext(source_path)[1]
         new_filename = f"img_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
         destination = os.path.join('images', new_filename)
         shutil.copy(source_path, destination)
-        return destination
+
+        try:
+            img = Image.open(source_path)
+            # --- Logic: Center Crop ให้เป็นจัตุรัส ---
+            width, height = img.size
+            min_dim = min(width, height)
+            
+            left = (width - min_dim) / 2
+            top = (height - min_dim) / 2
+            right = (width + min_dim) / 2
+            bottom = (height + min_dim) / 2
+            
+            img = img.crop((left, top, right, bottom))
+            # ปรับขนาดมาตรฐานสำหรับเก็บในเครื่อง
+            img = img.resize((300, 300), Image.Resampling.LANCZOS)
+            img.save(destination)
+            return destination
+        except Exception as e:
+            messagebox.showerror("Image Error", f"ไม่สามารถประมวลผลรูปภาพได้: {e}")
+            return ""
 
     def refresh_grid(self):
         self.dataset = self.db.fetch_all()
@@ -178,33 +231,11 @@ class AddressBookApp:
     def save_data(self):
         name = self.ent_name.get().strip()
         phone = self.ent_phone.get().strip()
-        email = self.ent_email.get().strip()
-        
-        # if not name or not phone:
-        #     messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
-        #     return
-        
-
-        # if not phone.isdigit():
-        #     messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องเป็นตัวเลขเท่านั้น!")
-        #     return  
-        
-        # if len(phone) > 10 :
-        #     messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องไม่เกิน 10 หลัก!")
-        #     return
-        
-        # if len(phone) < 9 :
-        #     messagebox.showerror("Error", "เบอร์โทรศัพท์สั้นเกินไป!")
-        #     return
-
-        # if email and not self.is_valid_email(email):
-        #     messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง! (ตัวอย่าง: name@email.com)")
-        #     return
-        
+        # email = self.ent_email.get().strip()
+           
 
         if not self.validate_inputs(): return  # ถ้าเช็กไม่ผ่านก็หยุดทำงาน
         
-
 
         new_path = self.upload_and_copy_image(self.selected_image_path)
         data = [name, self.ent_address.get().strip(), phone, self.ent_email.get().strip(), new_path]
@@ -236,27 +267,6 @@ class AddressBookApp:
             self.selected_image_path = ""
 
 
-        # if not name or not phone:
-        #     messagebox.showwarning("คำเตือน", "กรุณากรอกชื่อและเบอร์โทร!")
-        #     return
-        
-
-        # if not phone.isdigit():
-        #     messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องเป็นตัวเลขเท่านั้น!")
-        #     return  
-        
-        # if len(phone) > 10 :
-        #     messagebox.showerror("Error", "เบอร์โทรศัพท์ต้องไม่เกิน 10 หลัก!")
-        #     return
-        
-        # if len(phone) < 9 :
-        #     messagebox.showerror("Error", "เบอร์โทรศัพท์สั้นเกินไป!")
-        #     return
-
-
-        # if email and not self.is_valid_email(email):
-        #     messagebox.showerror("Error", "รูปแบบอีเมลไม่ถูกต้อง! (ตัวอย่าง: name@email.com)")
-        #     return
 
         if not self.validate_inputs(): return  # ถ้าเช็กไม่ผ่านก็หยุดทำงาน
 
@@ -318,7 +328,176 @@ class AddressBookApp:
         except:
             self.img_label.config(image="", text="Error Loading")
 
+
+    def export_to_csv(self):
+        """ส่งออกข้อมูลทั้งหมดเป็นไฟล์ CSV"""
+        # 1. ตรวจสอบรายการที่เลือกใน Listbox
+        selected_indices = self.listbox.curselection()
+        export_data = []
+    
+        if selected_indices:
+            # กรณีมีการเลือกรายการ: ดึงเฉพาะรายชื่อที่เลือกจาก dataset
+            for i in selected_indices:
+                export_data.append(self.dataset[i])
+                print(export_data)
+                msg_title = "ส่งออกข้อมูลที่เลือก"
+
+        else :
+            # กรณีไม่ได้เลือก: ถามว่าจะส่งออกทั้งหมดไหม
+            if not self.dataset:
+                messagebox.showwarning("Warning" , "No Data to Export")
+                return
+            if messagebox.askyesno("Export All" , "คุณไม่ได้เลือกรายชื่อ ต้องการส่งออก 'ทั้งหมด' ใช่หรือไม่?") :
+                export_data = self.dataset
+                msg_title = "ส่งออกข้อมูลทั้งหมด"
+            else :
+                return # ยกเลิกการทำงาน
+
+        # 2. เปิดหน้าต่างบันทึกไฟล์
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files" , '*.csv')],
+            title=msg_title
+        )
+
+        if file_path :
+            try:
+                with open(file_path, 'w', newline='', encoding='utf-8-sig') as f:
+                    writer = csv.writer(f)
+                    # 1. เขียนหัวตาราง (Header)
+                    writer.writerow(["ID", "Name", "Address", "Phone", "Email", "Image_Path"])
+                    
+                    # 2. จัดรูปแบบเบอร์โทรใหม่ (ใส่ตรงนี้!)
+                    formatted_data = []
+                    for row in export_data:
+                        new_row = list(row)
+                        # เติม ' นำหน้าเบอร์โทร เพื่อไม่ให้ Excel ตัดเลข 0 หรือทำเป็นเลขยกกำลัง
+                        new_row[3] = f"'{row[3]}" 
+                        formatted_data.append(new_row)
+                    
+                    # 3. เขียนข้อมูลที่จัดรูปแบบแล้วลงไฟล์
+                    writer.writerows(formatted_data)
+                
+                messagebox.showinfo("Success", f"ส่งออกข้อมูล {len(formatted_data)} รายการเรียบร้อย!")
+            except Exception as e:
+                messagebox.showerror("Error", f"ไม่สามารถส่งออกได้: {e}")
+
+    def print_to_pdf(self):
+        """สร้างไฟล์ PDF จากข้อมูลที่เลือกใน Listbox"""
+        selected_indices = self.listbox.curselection()
+        # เตรียมข้อมูลสำหรับ PDF
+        pdf_data = []
+        if selected_indices :
+            for i in selected_indices :
+                pdf_data.append(self.dataset[i])
+        else :
+            # ถ้าไม่ได้เลือก ให้เลือกทั้งหมด
+            if messagebox.askyesno("Print PDF" , "คุณไม่ได้เลือกรายชื่อ ต้องการพิมพ์ 'ทั้งหมด' ใช่หรือไม่?") :
+                pdf_data = self.dataset
+            else :
+                return
+        if not pdf_data :
+            messagebox.showwarning("Warning" , "No data for print")
+            return
+        
+        # เปิดหน้าต่างให้ผู้ใช้เลือกที่บันทึกไฟล์ PDF
+        file_path = filedialog.asksaveasfilename(
+            defaultextension='.pdf' ,
+            filetypes=[("PDF Files" , "*.pdf")],
+            title="Save PDF File"
+        )
+
+        if not file_path :
+            return
+        
+
+        try :
+            pdfmetrics.registerFont(TTFont('ThaiFont' ,'Font/THSarabunNew.ttf')) 
+            pdfmetrics.registerFont(TTFont('ThaiFontBold' , 'Font/THSarabunNew Bold.ttf'))
+        except :
+            print("Warning: ไม่พบไฟล์ฟอนต์ไทย โปรดตรวจสอบชื่อไฟล์")
+
+        try :
+            doc = SimpleDocTemplate(
+                                    file_path , 
+                                    pagesize=A4 ,
+                                    title="รายงานสมุดรายชื่อผู้ติดต่อ",
+                                    rightMargin=inch/2,
+                                    leftMargin=inch/2,
+                                    topMargin=inch/2,
+                                    bottomMargin=inch/2
+                                    )
+            styles = getSampleStyleSheet()
+
+            
+
+            # --- กำหนดฟอนต์ไทยให้กับ Style ต่างๆ ---
+
+            # สร้าง style สำหรับหัวตาราง
+            header_style = ParagraphStyle('HeaderStyle', 
+                                          parent=styles['Normal'], 
+                                          fontName='ThaiFontBold', 
+                                          fontSize=16, 
+                                          textColor=colors.whitesmoke, 
+                                          alignment=TA_CENTER)
+            
+            styles['Normal'].fontName = "ThaiFont"
+            styles['Normal'].fontSize = 14
+            styles['Normal'].leading = 18
+
+            styles['h1'].fontName = "ThaiFontBold"
+            styles['h1'].fontSize = 20
+
+            flowables = []
+          
+            title_style = styles['h1']
+            title_style.alignment = TA_CENTER
+            flowables.append(Paragraph("<b>รายงานสมุดรายชื่อผู้ติดต่อ</b>", title_style))
+            flowables.append(Spacer(1, 0.2 * inch))
+
+            data_for_table = [[Paragraph("รูปภาพ", header_style), 
+                               Paragraph("รายละเอียดผู้ติดต่อ", header_style)]]
+            for person in pdf_data:
+                    # เตรียมรูปภาพ
+                    img_path = person[5]
+                    if img_path and os.path.exists(img_path):
+                        # ปรับขนาดรูปให้เล็กลงเพื่อให้พอดีกับช่องตาราง
+                        display_img = RLImage(img_path, width=0.8*inch, height=0.8*inch)
+                    else:
+                        display_img = Paragraph("ไม่มีรูป", styles['Normal'])
+                        
+                    # เตรียมข้อความ (ใช้ <br/> แทน \n เพื่อให้ขึ้นบรรทัดใหม่ใน PDF)
+                    info_text = f"<b>ชื่อ:</b> {person[1]}<br/><br/><b>เบอร์โทร:</b> {person[3]}<br/><br/><b>อีเมล:</b> {person[4]}<br/><br/><b>ที่อยู่:</b> {person[2]}"
+                    info_p = Paragraph(info_text, styles['Normal'])
+                    
+                    data_for_table.append([display_img, info_p])
+
+                # 3. สร้างและตั้งค่าสไตล์ตาราง
+            t = Table(data_for_table, colWidths=[1.2*inch, 4.8*inch])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey), # สีพื้นหลังหัวตาราง
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke), # สีตัวอักษรหัวตาราง
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'), # จัดตัวอักษรชิดซ้าย
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), # จัดกึ่งกลางแนวตั้ง
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.black), # ตีเส้นตาราง
+                ('FONTNAME', (0, 0), (-1, -1), 'ThaiFont'), # ใช้ฟอนต์ไทยในตาราง
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 10), # เพิ่มช่องว่างด้านล่างของเซลล์
+                ('TOPPADDING', (0, 0), (-1, -1), 10),    # เพิ่มช่องว่างด้านบนของเซลล์
+            ]))
+                
+            flowables.append(t)
+
+                # 4. บันทึกไฟล์
+            doc.build(flowables)
+            messagebox.showinfo("สำเร็จ", "สร้าง PDF แบบตารางเรียบร้อยแล้ว!")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"ไม่สามารถสร้าง PDF ได้: {e}")
+
+
+
 if __name__ == "__main__":
+
     root = Tk()
     app = AddressBookApp(root)
     root.mainloop()
