@@ -467,7 +467,7 @@ class AddressBookApp:
                         display_img = Paragraph("ไม่มีรูป", styles['Normal'])
                         
                     # เตรียมข้อความ (ใช้ <br/> แทน \n เพื่อให้ขึ้นบรรทัดใหม่ใน PDF)
-                    info_text = f"<b>ชื่อ:</b> {person[1]}<br/><br/><b>เบอร์โทร:</b> {person[3]}<br/><br/><b>อีเมล:</b> {person[4]}<br/><br/><b>ที่อยู่:</b> {person[2]}"
+                    info_text = f"<b>ชื่อ:</b> {person[1]}<br/><b>เบอร์โทร:</b> {person[3]}<br/><b>อีเมล:</b> {person[4]}<br/><b>ที่อยู่:</b> {person[2]}"
                     info_p = Paragraph(info_text, styles['Normal'])
                     
                     data_for_table.append([display_img, info_p])
